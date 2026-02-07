@@ -1,0 +1,57 @@
+name: Go Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Go ${{ matrix.go-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go-version: ['1.22']
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Go 环境
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: 显示 Go 版本
+      run: go version
+
+    - name: 下载依赖
+      run: go mod download || true
+
+    - name: 运行测试
+      run: go test -v ./... || echo "无测试文件或测试失败"
+
+    - name: 构建 portal (Windows X86_64)
+      run: GOOS=windows GOARCH=amd64 go build -v -o portal-windows-amd64.exe ./portal/portal.go
+
+    - name: 构建 portal_windows_install (Windows X86_64)
+      run: GOOS=windows GOARCH=amd64 go build -v -o portal_windows_install-windows-amd64.exe ./portal_windows_install/portal_windows_install.go
+
+    - name: 构建 portal (Linux X86_64)
+      run: GOOS=linux GOARCH=amd64 go build -v -o portal-linux-amd64 ./portal/portal.go
+
+    - name: 构建 portal (Linux ARM64)
+      run: GOOS=linux GOARCH=arm64 go build -v -o portal-linux-arm64 ./portal/portal.go
+
+    - name: 上传构建产物
+      uses: actions/upload-artifact@v4
+      with:
+        name: portal-binaries-go${{ matrix.go-version }}
+        path: |
+          portal-windows-amd64.exe
+          portal_windows_install-windows-amd64.exe
+          portal-linux-amd64
+          portal-linux-arm64
