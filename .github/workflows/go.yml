@@ -24,6 +24,7 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
+        cache: false
 
     - name: 显示 Go 版本
       run: go version
@@ -46,12 +47,26 @@ jobs:
     - name: 构建 portal (Linux ARM64)
       run: GOOS=linux GOARCH=arm64 go build -v -o portal-linux-arm64 ./portal/portal.go
 
-    - name: 上传构建产物
+    - name: 上传 portal (Windows X86_64)
       uses: actions/upload-artifact@v4
       with:
-        name: portal-binaries-go${{ matrix.go-version }}
-        path: |
-          portal-windows-amd64.exe
-          portal_windows_install-windows-amd64.exe
-          portal-linux-amd64
-          portal-linux-arm64
+        name: portal-windows-amd64
+        path: portal-windows-amd64.exe
+
+    - name: 上传 portal_windows_install (Windows X86_64)
+      uses: actions/upload-artifact@v4
+      with:
+        name: portal_windows_install-windows-amd64
+        path: portal_windows_install-windows-amd64.exe
+
+    - name: 上传 portal (Linux X86_64)
+      uses: actions/upload-artifact@v4
+      with:
+        name: portal-linux-amd64
+        path: portal-linux-amd64
+
+    - name: 上传 portal (Linux ARM64)
+      uses: actions/upload-artifact@v4
+      with:
+        name: portal-linux-arm64
+        path: portal-linux-arm64
