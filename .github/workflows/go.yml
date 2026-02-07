@@ -3,6 +3,8 @@ name: Go Build
 on:
   push:
     branches: [ main, develop ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
@@ -70,3 +72,32 @@ jobs:
       with:
         name: portal-linux-arm64
         path: portal-linux-arm64
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 下载构建产物
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: 显示下载的文件
+      run: ls -R artifacts
+
+    - name: 创建 Release 并上传构建产物
+      uses: softprops/action-gh-release@v2
+      with:
+        files: artifacts/**/*
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
