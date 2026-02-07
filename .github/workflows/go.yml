@@ -8,10 +8,16 @@ on:
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: '创建 Release'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
-    name: Build Go ${{ matrix.go-version }}
+    name: Build Portal Go ${{ matrix.go-version }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -77,7 +83,7 @@ jobs:
     name: Release
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == true)
 
     permissions:
       contents: write
@@ -94,10 +100,21 @@ jobs:
     - name: 显示下载的文件
       run: ls -R artifacts
 
+    - name: 准备上传文件
+      run: |
+        find artifacts -type f -exec cp {} . \;
+        ls -lah
+
     - name: 创建 Release 并上传构建产物
       uses: softprops/action-gh-release@v2
       with:
-        files: artifacts/**/*
+        files: |
+          portal-windows-amd64.exe
+          portal_windows_install-windows-amd64.exe
+          portal-linux-amd64
+          portal-linux-arm64
         generate_release_notes: true
+        draft: false
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
